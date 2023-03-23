@@ -53,6 +53,8 @@ class tracker : public transfer {
     /// Get the tag for this tracker.
     PN_CPP_EXTERN binary tag() const;
 
+    PN_CPP_EXTERN void abort();
+
     /// @cond INTERNAL
   friend class internal::factory<tracker>;
     /// @endcond

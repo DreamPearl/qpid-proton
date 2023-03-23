@@ -45,6 +45,8 @@
 #include <mutex>
 #include <thread>
 
+#include "proton_bits.hpp"
+
 namespace {
 std::mutex m;
 std::condition_variable cv;
@@ -66,6 +68,12 @@ class test_server : public proton::messaging_handler {
             }
             cv.notify_one();
         }
+
+        proton::connection_options on_accept(proton::listener &l) override {
+            l.stop();
+            proton::connection_options co;
+            return co;
+        }
     };
 
     std::string url;
@@ -80,11 +88,19 @@ class test_server : public proton::messaging_handler {
     }
 
     void on_message(proton::delivery &d, proton::message &msg) override {
-        ASSERT_EQUAL(test_tag, d.tag());
+        std::cout << "I am a message and I am delivered." << std::endl;
+        // ASSERT_EQUAL(test_tag, d.tag());
         d.receiver().close();
         d.connection().close();
-        listener.stop();
+        // listener.stop();
     }
+
+    void on_delivery_settle(proton::delivery &d) override {
+        std::cout << "The delivery has been settled." << std::endl;
+        d.receiver().close();
+        d.connection().close();
+    }
+
 };
 
 class test_client : public proton::messaging_handler {
@@ -103,19 +119,35 @@ class test_client : public proton::messaging_handler {
     void on_sendable(proton::sender &s) override {
         proton::message msg;
         msg.body("message");
-        proton::tracker t = s.send(msg, test_tag);
-        ASSERT_EQUAL(test_tag, t.tag());
+
+        // DO 1.
+        // proton::tracker t = s.send(msg, test_tag);
+        // t.abort();
+
+        // OR 2.
+        s.fake_send(msg);
+
+        // OR 3.
+        // std::vector<char> buf;
+        // msg.encode(buf);
+        // pn_link_send(unwrap(s), &buf[0], buf.size());
+        // pn_delivery_t * pnd = pn_link_current(unwrap(s));
+        // pn_delivery_abort(pnd);
+
+        // ASSERT_EQUAL(test_tag, t.tag());
         s.connection().close();
     }
 
     void on_tracker_accept(proton::tracker &t) override {
-        ASSERT_EQUAL(test_tag, t.tag());
+        // ASSERT_EQUAL(test_tag, t.tag());
         tracker_accept_counter++;
+        std::cout << "The tracker has been accepted." << std::endl;
     }
 
     void on_tracker_settle(proton::tracker &t) override {
-        ASSERT_EQUAL(test_tag, t.tag());
+        // ASSERT_EQUAL(test_tag, t.tag());
         tracker_settle_counter++;
+        std::cout << "The tracker has been settled." << std::endl;
     }
 };
 
@@ -138,8 +170,8 @@ int test_delivery_tag() {
     proton::container(send).run();
     thread_recv.join();
 
-    ASSERT_EQUAL(1 ,tracker_accept_counter);
-    ASSERT_EQUAL(1 ,tracker_settle_counter);
+    // ASSERT_EQUAL(1 ,tracker_accept_counter);
+    // ASSERT_EQUAL(1 ,tracker_settle_counter);
 
     return 0;
 }

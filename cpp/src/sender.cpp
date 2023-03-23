@@ -36,6 +36,7 @@
 #include "tracing_private.hpp"
 
 #include <assert.h>
+#include <iostream>
 
 namespace proton {
 
@@ -60,6 +61,26 @@ class target sender::target() const {
     return proton::target(*this);
 }
 
+void sender::fake_send(const message &message) {
+          std::vector<char> buf;
+
+        // Tracing& ot = Tracing::getTracing();
+        // tracker track = make_wrapper<tracker>(dlv);
+        // ot.message_encode(message, buf, tag, track);
+        std::cout << "Before message encode. " << std::endl;
+        message.encode(buf);
+        std::cout << "After message encode. " << std::endl;
+
+        // assert(!buf.empty());
+        pn_link_send(pn_object(), &buf[0], buf.size());
+        // proton::tracker t = s.send(msg, test_tag);
+        pn_delivery_t * pnd = pn_link_current(pn_object());
+        pn_delivery_abort(pnd);
+        // if (pn_link_snd_settle_mode(pn_object()) == PN_SND_SETTLED)
+        // pn_delivery_settle(dlv);
+        pn_link_advance(pn_object());
+}
+
 tracker sender::send(const message &message) {
     uint64_t id = ++tag_counter;
     const uint8_t *begin = reinterpret_cast<const uint8_t *>(&id);
@@ -72,6 +93,7 @@ tracker sender::send(const message &message, const binary &tag) {
         pn_object(),
         pn_dtag((reinterpret_cast<const char *>(&tag[0])), tag.size()));
     std::vector<char> buf;
+
 
     Tracing& ot = Tracing::getTracing();
     tracker track = make_wrapper<tracker>(dlv);
@@ -92,7 +114,7 @@ void sender::return_credit() {
     lctx.draining = false;
     pn_link_drained(pn_object());
 }
-
+ 
 sender_iterator sender_iterator::operator++() {
     if (!!obj_) {
         pn_link_t *lnk = pn_link_next(obj_.pn_object(), 0);
