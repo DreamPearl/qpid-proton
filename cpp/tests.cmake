@@ -41,7 +41,7 @@ endif()
 
 macro(add_cpp_test test)
   add_executable (${test} src/${test}.cpp)
-  target_link_libraries (${test} qpid-proton-cpp ${PLATFORM_LIBS})
+  target_link_libraries (${test} qpid-proton-cpp ${PLATFORM_LIBS} Proton::core Proton::proactor Threads::Threads)
   pn_add_test(
     EXECUTABLE
     NAME cpp-${test}
@@ -63,6 +63,7 @@ add_cpp_test(link_test)
 add_cpp_test(credit_test)
 add_cpp_test(delivery_test)
 add_cpp_test(context_test)
+add_cpp_test(message_abort_test)
 if (ENABLE_JSONCPP)
   add_cpp_test(connect_config_test)
   target_link_libraries(connect_config_test qpid-proton-core) # For pn_sasl_enabled
