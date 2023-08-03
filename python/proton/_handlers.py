@@ -967,7 +967,7 @@ class TransactionalClientHandler(MessagingHandler, TransactionHandler):
 
     :param prefetch: Initial flow credit for receiving messages, defaults to 10.
     :param auto_accept: If ``True``, accept all messages (default). Otherwise
-        messages must be individually accepted or rejected.
+        messages must be accepted or rejected individually.
     :param auto_settle: If ``True`` (default), automatically settle messages
         upon receiving a settled disposition for that delivery. Otherwise
         messages must be explicitly settled.
