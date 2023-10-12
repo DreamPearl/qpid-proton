@@ -240,6 +240,29 @@ PN_CPP_CLASS_EXTERN messaging_handler {
     PN_CPP_EXTERN virtual void on_error(const error_condition&);
 };
 
+class
+PN_CPP_CLASS_EXTERN transaction_handler {
+  public:
+    PN_CPP_EXTERN transaction_handler();
+    PN_CPP_EXTERN virtual ~transaction_handler();
+
+    /// Called when a local transaction is declared.
+    PN_CPP_EXTERN virtual void on_transaction_declared(session&);
+
+    /// Called when a local transaction is discharged successfully.
+    PN_CPP_EXTERN virtual void on_transaction_committed(session&);
+
+    /// Called when a local transaction is discharged unsuccessfully (aborted).
+    PN_CPP_EXTERN virtual void on_transaction_aborted(session&);
+
+    /// Called when a local transaction declare fails.
+    PN_CPP_EXTERN virtual void on_transaction_declare_failed(session&);
+
+    /// Called when the commit of a local transaction fails.
+    PN_CPP_EXTERN virtual void on_transaction_commit_failed(session&);
+
+};
+
 } // namespace proton
 
 #endif // PROTON_MESSAGING_HANDLER_HPP

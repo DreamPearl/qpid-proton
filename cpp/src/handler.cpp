@@ -29,6 +29,7 @@
 #include "proton/sender_options.hpp"
 #include "proton/session.hpp"
 #include "proton/transport.hpp"
+#include "proton/delivery.hpp"
 
 #include "proton_bits.hpp"
 
@@ -90,5 +91,59 @@ void messaging_handler::on_sender_drain_start(sender &) {}
 void messaging_handler::on_receiver_drain_finish(receiver &) {}
 
 void messaging_handler::on_error(const error_condition& c) { throw proton::error(c.what()); }
+
+void transaction_handler::on_transaction_declared(session &) {}
+void transaction_handler::on_transaction_committed(session &) {}
+void transaction_handler::on_transaction_aborted(session &) {}
+void transaction_handler::on_transaction_declare_failed(session &) {}
+void transaction_handler::on_transaction_commit_failed(session &) {}
+
+class Transaction {
+proton::sender txn_ctrl;
+proton::transaction_handler handler;
+int id = 0;
+proton::delivery* _declare = NULL;
+proton::delivery* _discharge = NULL;
+bool failed = false;
+std::vector<proton::delivery> pending;
+public:
+
+Transaction(proton::sender _txn_ctrl, proton::transaction_handler _handler, bool _settle_before_discharge = false) {
+    txn_ctrl = _txn_ctrl;
+    handler = _handler;
+    bool settle_before_discharge = _settle_before_discharge;
+    declare();
+}
+
+void commit() {
+    discharge(false);
+}
+
+void abort() {
+    discharge(true);
+}
+
+void declare() {
+
+}
+
+void discharge(bool failed) {
+    this->failed = failed;
+    proton::symbol descriptor;
+    proton::value _value;
+    proton::tracker discharge = send_ctrl(descriptor, _value);
+}
+
+proton::tracker send_ctrl(proton::symbol descriptor, proton::value _value) {
+    proton::message msg = _value; // TODO
+    proton::tracker delivery = txn_ctrl.send(msg);
+    return delivery;
+}
+
+proton::delivery send() {
+
+}
+
+};
 
 }
