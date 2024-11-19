@@ -36,16 +36,58 @@ namespace proton {
 
 class transaction_handler;
 
+class transaction_impl {
+  public:
+    proton::sender *txn_ctrl = nullptr;
+    proton::transaction_handler *handler = nullptr;
+    // TODO int
+    proton::binary id;
+    proton::tracker _declare;
+    proton::tracker _discharge;
+    bool failed = false;
+    std::vector<proton::tracker> pending;
+
+    void commit();
+    void abort();
+    void declare();
+    proton::tracker send(proton::sender s, proton::message msg);
+
+    void discharge(bool failed);
+    proton::tracker send_ctrl(proton::symbol descriptor, proton::value _value);
+    void handle_outcome(proton::tracker t);
+    // private:
+    transaction_impl(proton::sender &_txn_ctrl,
+                     proton::transaction_handler &_handler,
+                     bool _settle_before_discharge);
+
+    // delete copy and assignment operator to ensure no copy of this object is
+    // every made transaction_impl(const transaction_impl&) = delete;
+    // transaction_impl& operator=(const transaction_impl&) = delete;
+
+    friend transaction;
+};
+
 class
 PN_CPP_CLASS_EXTERN transaction {
+    // private:
+    //   PN_CPP_EXTERN transaction(proton::sender& _txn_ctrl,
+    //   proton::transaction_handler& _handler, bool _settle_before_discharge);
+
   public:
   // TODO:
-    PN_CPP_EXTERN virtual ~transaction();
-    PN_CPP_EXTERN virtual void commit();
-    PN_CPP_EXTERN virtual void abort();
-    PN_CPP_EXTERN virtual void declare();
-    PN_CPP_EXTERN virtual void handle_outcome(proton::tracker);
-    PN_CPP_EXTERN virtual proton::tracker send(proton::sender s, proton::message msg);
+    PN_CPP_EXTERN transaction(std::shared_ptr<transaction_impl> impl);
+    // PN_CPP_EXTERN transaction( transaction_impl *impl);
+    // PN_CPP_EXTERN transaction();
+    PN_CPP_EXTERN ~transaction();
+    PN_CPP_EXTERN void commit();
+    PN_CPP_EXTERN void abort();
+    PN_CPP_EXTERN void declare();
+    PN_CPP_EXTERN void handle_outcome(proton::tracker);
+    PN_CPP_EXTERN proton::tracker send(proton::sender s, proton::message msg);
+
+    static transaction mk_transaction_impl(sender &s, transaction_handler &h,
+                                           bool f);
+    std::shared_ptr<transaction_impl> _impl;
 };
 
 class
@@ -54,19 +96,19 @@ PN_CPP_CLASS_EXTERN transaction_handler {
     PN_CPP_EXTERN virtual ~transaction_handler();
 
     /// Called when a local transaction is declared.
-    PN_CPP_EXTERN virtual void on_transaction_declared(transaction&);
+    PN_CPP_EXTERN virtual void on_transaction_declared(transaction);
 
     /// Called when a local transaction is discharged successfully.
-    PN_CPP_EXTERN virtual void on_transaction_committed(transaction&);
+    PN_CPP_EXTERN virtual void on_transaction_committed(transaction);
 
     /// Called when a local transaction is discharged unsuccessfully (aborted).
-    PN_CPP_EXTERN virtual void on_transaction_aborted(transaction&);
+    PN_CPP_EXTERN virtual void on_transaction_aborted(transaction);
 
     /// Called when a local transaction declare fails.
-    PN_CPP_EXTERN virtual void on_transaction_declare_failed(transaction&);
+    PN_CPP_EXTERN virtual void on_transaction_declare_failed(transaction);
 
     /// Called when the commit of a local transaction fails.
-    PN_CPP_EXTERN virtual void on_transaction_commit_failed(transaction&);
+    PN_CPP_EXTERN virtual void on_transaction_commit_failed(transaction);
 };
 
 } // namespace proton
