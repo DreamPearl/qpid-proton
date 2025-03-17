@@ -49,7 +49,7 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
     int confirmed = 0;
 
     proton::session session;
-    // proton::transaction transaction;
+
   public:
     tx_send(const std::string &s, int c, int b):
         url(s), total(c), batch_size(b), sent(0) {}
@@ -96,7 +96,7 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
 
             msg.id(unique_id++);
             msg.body(m);
-            std::cout << "##### [example] transaction send msg: "  << msg
+            std::cout << "[example] transaction send msg: "  << msg
                       << std::endl;
             session.txn_send(sender, msg);
             current_batch += 1;

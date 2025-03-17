@@ -46,7 +46,6 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
     int committed = 0;
 
     proton::session session;
-    // proton::transaction transaction;
   public:
     tx_recv(const std::string &s, int c, int b):
         url(s), expected(c), batch_size(b) {}
@@ -72,10 +71,7 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
     void on_transaction_declared(proton::session s) override {
         std::cout << "[on_transaction_declared] txn called " << (&s)
                   << std::endl;
-        // std::cout << "[on_transaction_declared] txn is_empty " << (t.is_empty())
-        //           << "\t" << transaction.is_empty() << std::endl;
-        receiver.add_credit(batch_size); 
-        // transaction = t;
+        receiver.add_credit(batch_size);
     }
 
     void on_message(proton::delivery &d, proton::message &msg) override {
@@ -83,7 +79,6 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
         session.txn_accept(d);
         current_batch += 1;
         if(current_batch == batch_size) {
-            // transaction = proton::transaction(); // null
         }
     }
 
