@@ -32,6 +32,7 @@
 #include "proton/messaging_handler.hpp"
 #include "proton/tracker.hpp"
 #include "proton/transfer.hpp"
+#include "types_internal.hpp"
 
 #include "contexts.hpp"
 #include "link_namer.hpp"
@@ -312,12 +313,8 @@ void transaction_impl::accept(delivery &t) {
 
 void transaction_impl::update(tracker &t, uint64_t state) {
     if (state) {
-        proton::value data(pn_disposition_data(pn_delivery_local(unwrap(t))));
-        std::list<proton::value> data_to_send;
-        data_to_send.push_back(transaction_id);
-        data = data_to_send;
-
-        pn_delivery_update(unwrap(t), state);
+        auto disp = pn_transactional_disposition(pn_delivery_local(unwrap(t)));
+        pn_transactional_disposition_set_id(disp, pn_bytes(transaction_id));
     }
 }
 
