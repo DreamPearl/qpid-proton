@@ -33,6 +33,7 @@
 #include <map>
 #include <string>
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -82,7 +83,7 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
     }
 
     void send() {
-        static int unique_id = 10000;
+        std::atomic<int> unique_id(10000);
         proton::session session = sender.session();
         while (session.txn_is_declared() && sender.credit() &&
                (committed + current_batch) < total) {
@@ -90,7 +91,7 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
             std::map<std::string, int> m;
             m["sequence"] = committed + current_batch;
 
-            msg.id(unique_id++);
+            msg.id(std::atomic_fetch_add(&unique_id, 1));
             msg.body(m);
             std::cout << "Sending: " << msg << std::endl;
             session.txn_send(sender, msg);
