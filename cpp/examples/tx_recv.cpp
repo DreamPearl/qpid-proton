@@ -27,7 +27,7 @@
 #include <proton/message_id.hpp>
 #include <proton/messaging_handler.hpp>
 #include <proton/types.hpp>
-#include <proton/transaction.hpp>
+#include <proton/transaction_handler.hpp>
 
 #include <iostream>
 #include <map>

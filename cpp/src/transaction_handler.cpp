@@ -19,7 +19,7 @@
  *
  */
 
-#include "proton/transaction.hpp"
+#include "proton/transaction_handler.hpp"
 #include "proton/delivery.h"
 #include "proton/delivery.hpp"
 #include "proton/message.hpp"

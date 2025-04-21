@@ -28,7 +28,7 @@
 #include "proton/sender_options.hpp"
 #include "proton/session_options.hpp"
 #include "proton/target_options.hpp"
-#include "proton/transaction.hpp"
+#include "proton/transaction_handler.hpp"
 #include "proton/messaging_handler.hpp"
 #include "proton/tracker.hpp"
 #include "proton/transfer.hpp"
