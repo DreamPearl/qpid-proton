@@ -35,8 +35,6 @@
 
 namespace proton {
 
-class transaction_handler;
-
 class
 PN_CPP_CLASS_EXTERN transaction_handler {
   public:

@@ -26,7 +26,6 @@
 #include "proton_bits.hpp"
 #include "types_internal.hpp"
 #include "proton/binary.hpp"
-#include "proton/transaction.hpp"
 
 #include <proton/delivery.h>
 

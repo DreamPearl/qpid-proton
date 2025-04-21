@@ -162,7 +162,7 @@ class target_options::impl {
     option<enum target::expiry_policy> expiry_policy;
     option<std::vector<symbol> > capabilities;
     option<target::dynamic_property_map> dynamic_properties;
-    option<int> type;
+    option<bool> is_coordinator;
 
     void apply(target& t) {
         node_address(t, address, dynamic, anonymous);
@@ -176,8 +176,8 @@ class target_options::impl {
             get(dynamic_properties.value, target_map);
             value(pn_terminus_properties(unwrap(t))) = target_map;
         }
-        if (type.set) {
-            pn_terminus_set_type(unwrap(t), pn_terminus_type_t(type.value));
+        if (is_coordinator.set && is_coordinator.value) {
+            pn_terminus_set_type(unwrap(t), pn_terminus_type_t(PN_COORDINATOR));
         }
     }
 };
@@ -205,8 +205,7 @@ target_options& target_options::dynamic_properties(const target::dynamic_propert
     return *this;
 }
 
-target_options& target_options::mark_coordinator() { impl_->type = PN_COORDINATOR; return *this; }
-target_options& target_options::type(int t) { impl_->type = t; return *this;}
+target_options& target_options::mark_coordinator() { impl_->is_coordinator = true; return *this; }
 
 void target_options::apply(target& s) const { impl_->apply(s); }
 

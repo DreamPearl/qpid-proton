@@ -118,6 +118,7 @@ void on_delivery(messaging_handler& handler, pn_event_t* event) {
     pn_delivery_t *dlv = pn_event_delivery(event);
     link_context& lctx = link_context::get(lnk);
     Tracing& ot = Tracing::getTracing();
+
     if (pn_terminus_get_type(pn_link_remote_target(lnk)) == PN_COORDINATOR) {
         if (pn_delivery_updated(dlv)) {
             tracker t(make_wrapper<tracker>(dlv));
