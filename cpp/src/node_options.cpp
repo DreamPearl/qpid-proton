@@ -205,7 +205,7 @@ target_options& target_options::dynamic_properties(const target::dynamic_propert
     return *this;
 }
 
-target_options& target_options::mark_coordinator() { impl_->is_coordinator = true; return *this; }
+target_options& target_options::make_coordinator() { impl_->is_coordinator = true; return *this; }
 
 void target_options::apply(target& s) const { impl_->apply(s); }
 

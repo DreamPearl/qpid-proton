@@ -62,7 +62,7 @@ class target_options {
 
     /// Set the target be of type coordinator.
     /// This immediately override the currently assigned type.
-    PN_CPP_EXTERN target_options& mark_coordinator();
+    PN_CPP_EXTERN target_options& make_coordinator();
 
     /// Request that a node be dynamically created by the remote peer.
     /// The default is false.  Any specified target address() is

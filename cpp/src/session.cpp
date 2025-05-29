@@ -210,7 +210,7 @@ void session::declare_transaction(proton::transaction_handler &handler, bool set
         proton::target_options opts;
         std::vector<symbol> cap = {proton::symbol("amqp:local-transactions")};
         opts.capabilities(cap);
-        opts.mark_coordinator();
+        opts.make_coordinator();
 
         proton::sender_options so;
         so.name("txn-ctrl");
