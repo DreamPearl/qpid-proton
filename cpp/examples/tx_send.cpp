@@ -40,7 +40,8 @@
 class tx_send : public proton::messaging_handler, proton::transaction_handler {
   private:
     proton::sender sender;
-    std::string url;
+    std::string conn_url_;
+    std::string addr_;
     int total;
     int batch_size;
     int sent;
@@ -49,14 +50,20 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
     int committed = 0;
 
   public:
-    tx_send(const std::string &s, int c, int b):
-        url(s), total(c), batch_size(b), sent(0) {}
+    tx_send(const std::string& u, const std::string& a, int c, int b):
+        conn_url_(u), addr_(a), total(c), batch_size(b), sent(0) {}
 
     void on_container_start(proton::container &c) override {
-        sender = c.open_sender(url);
+        // sender = c.open_sender(url);
+        c.connect(conn_url_);
+    }
+
+    void on_connection_open(proton::connection& c) override {
+        c.open_session();
     }
 
     void on_session_open(proton::session &s) override {
+        s.open_sender(addr_);
         std::cout << "New session is open, declaring transaction now..." << std::endl;
         s.declare_transaction(*this);
     }
@@ -85,7 +92,7 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
     void send() {
         std::atomic<int> unique_id(10000);
         proton::session session = sender.session();
-        while (session.txn_is_declared() && sender.credit() &&
+        while (session.transaction_is_declared() && sender.credit() &&
                (committed + current_batch) < total) {
             proton::message msg;
             std::map<std::string, int> m;
@@ -94,16 +101,16 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
             msg.id(std::atomic_fetch_add(&unique_id, 1));
             msg.body(m);
             std::cout << "Sending: " << msg << std::endl;
-            session.txn_send(sender, msg);
+            session.transaction_send(sender, msg);
             current_batch += 1;
             if(current_batch == batch_size)
             {
                 if (batch_index % 2 == 0) {
                     std::cout << "Commiting transaction..." << std::endl;
-                    session.txn_commit();
+                    session.transaction_commit();
                 } else {
                     std::cout << "Aborting transaction..." << std::endl;
-                    session.txn_abort();
+                    session.transaction_abort();
                 }
                 batch_index++;
             }
@@ -138,19 +145,21 @@ class tx_send : public proton::messaging_handler, proton::transaction_handler {
 };
 
 int main(int argc, char **argv) {
-    std::string address("127.0.0.1:5672/examples");
+    std::string conn_url = argc > 1 ? argv[1] : "//127.0.0.1:5672";
+    std::string addr = argc > 2 ? argv[2] : "examples";
     int message_count = 6;
     int batch_size = 3;
     example::options opts(argc, argv);
 
-    opts.add_value(address, 'a', "address", "connect and send to URL", "URL");
+    opts.add_value(conn_url, 'u', "url", "connect and send to URL", "URL");
+    opts.add_value(addr, 'a', "address", "connect and send to address", "URL");
     opts.add_value(message_count, 'm', "messages", "number of messages to send", "COUNT");
     opts.add_value(batch_size, 'b', "batch_size", "number of messages in each transaction", "BATCH_SIZE");
 
     try {
         opts.parse();
 
-        tx_send send(address, message_count, batch_size);
+        tx_send send(conn_url, addr, message_count, batch_size);
         proton::container(send).run();
 
         return 0;

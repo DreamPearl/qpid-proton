@@ -39,7 +39,8 @@
 class tx_recv : public proton::messaging_handler, proton::transaction_handler {
   private:
     proton::receiver receiver; 
-    std::string url;
+    std::string conn_url_;
+    std::string addr_;
     int expected;
     int batch_size;
     int current_batch = 0;
@@ -47,20 +48,27 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
 
     proton::session session;
   public:
-    tx_recv(const std::string &s, int c, int b):
-        url(s), expected(c), batch_size(b) {}
+    tx_recv(const std::string& u, const std::string &a, int c, int b):
+        conn_url_(u), addr_(a), expected(c), batch_size(b) {}
 
     void on_container_start(proton::container &c) override {
-        receiver = c.open_receiver(url);
+        // receiver = c.open_receiver(url);
+        c.connect(conn_url_);
+    }
+
+   void on_connection_open(proton::connection& c) override {
+        c.open_session();  
     }
 
     void on_session_open(proton::session &s) override {
+        s.open_sender(addr_);
         session = s;
         std::cout << "Session open, declare_txn" << std::endl;
         s.declare_transaction(*this);
     }
 
     void on_transaction_declare_failed(proton::session) {}
+
     void on_transaction_commit_failed(proton::session s) {
         std::cout << "Transaction Commit Failed" << std::endl;
         s.connection().close();
@@ -75,7 +83,7 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
 
     void on_message(proton::delivery &d, proton::message &msg) override {
         std::cout<<"# MESSAGE: " << msg.id() <<": "  << msg.body() << std::endl;
-        session.txn_accept(d);
+        session.transaction_accept(d);
         current_batch += 1;
         if(current_batch == batch_size) {
         }
@@ -97,19 +105,21 @@ class tx_recv : public proton::messaging_handler, proton::transaction_handler {
 };
 
 int main(int argc, char **argv) {
-    std::string address("127.0.0.1:5672/examples");
+    std::string conn_url = argc > 1 ? argv[1] : "//127.0.0.1:5672";
+    std::string addr = argc > 2 ? argv[2] : "examples";
     int message_count = 6;
     int batch_size = 3;
     example::options opts(argc, argv);
 
-    opts.add_value(address, 'a', "address", "connect and send to URL", "URL");
+        opts.add_value(conn_url, 'u', "url", "connect and send to URL", "URL");
+    opts.add_value(addr, 'a', "address", "connect and send to address", "URL");
     opts.add_value(message_count, 'm', "messages", "number of messages to send", "COUNT");
     opts.add_value(batch_size, 'b', "batch_size", "number of messages in each transaction", "BATCH_SIZE");
 
     try {
         opts.parse();
 
-        tx_recv recv(address, message_count, batch_size);
+        tx_recv recv(conn_url, addr, message_count, batch_size);
         proton::container(recv).run();
 
         return 0;

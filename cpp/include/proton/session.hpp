@@ -108,15 +108,15 @@ PN_CPP_CLASS_EXTERN session : public internal::object<pn_session_t>, public endp
 
     PN_CPP_EXTERN void declare_transaction(proton::transaction_handler &handler, bool settle_before_discharge = false);
 
-    PN_CPP_EXTERN bool txn_is_empty();
-    PN_CPP_EXTERN bool txn_is_declared();
-    PN_CPP_EXTERN void txn_commit();
-    PN_CPP_EXTERN void txn_abort();
-    PN_CPP_EXTERN void txn_declare();
-    PN_CPP_EXTERN void txn_handle_outcome(proton::tracker);
-    PN_CPP_EXTERN proton::tracker txn_send(proton::sender s, proton::message msg);
-    PN_CPP_EXTERN void txn_accept(delivery &t);
-    PN_CPP_EXTERN proton::connection txn_connection() const;
+    PN_CPP_EXTERN bool transaction_is_empty();
+    PN_CPP_EXTERN bool transaction_is_declared();
+    PN_CPP_EXTERN void transaction_commit();
+    PN_CPP_EXTERN void transaction_abort();
+    PN_CPP_EXTERN void transaction_declare();
+    PN_CPP_EXTERN void transaction_handle_outcome(proton::tracker);
+    PN_CPP_EXTERN proton::tracker transaction_send(proton::sender s, proton::message msg);
+    PN_CPP_EXTERN void transaction_accept(delivery &t);
+    PN_CPP_EXTERN proton::connection transaction_connection() const;
 
     /// @cond INTERNAL
   friend class internal::factory<session>;
@@ -125,8 +125,8 @@ PN_CPP_CLASS_EXTERN session : public internal::object<pn_session_t>, public endp
     /// @endcond
 
     private:
-    // clean up txn internally
-    void txn_delete();
+    // clean up transaction internally
+    void transaction_delete();
 };
 
 /// @cond INTERNAL

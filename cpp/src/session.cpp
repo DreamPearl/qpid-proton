@@ -201,8 +201,8 @@ void session::declare_transaction(proton::transaction_handler &handler, bool set
         class InternalTransactionHandler : public proton::messaging_handler {
 
             void on_tracker_settle(proton::tracker &t) override {
-                if (!t.session().txn_is_empty()) {
-                    t.session().txn_handle_outcome(t);
+                if (!t.session().transaction_is_empty()) {
+                    t.session().transaction_handle_outcome(t);
                 }
             }
         };
@@ -229,17 +229,17 @@ void session::declare_transaction(proton::transaction_handler &handler, bool set
     txn_impl->declare();
 }
 
-void session::txn_delete() { auto &_txn_impl = session_context::get(pn_object())._txn_impl; delete _txn_impl; _txn_impl = nullptr;}
-void session::txn_commit() { session_context::get(pn_object())._txn_impl->commit(); }
-void session::txn_abort() { session_context::get(pn_object())._txn_impl->abort(); }
-void session::txn_declare() { session_context::get(pn_object())._txn_impl->declare(); }
-bool session::txn_is_empty() { return session_context::get(pn_object())._txn_impl == NULL; }
-bool session::txn_is_declared() { return (!txn_is_empty()) && session_context::get(pn_object())._txn_impl->state == transaction_impl::State::DECLARED; }
-void session::txn_accept(delivery &t) { return session_context::get(pn_object())._txn_impl->accept(t); }
-proton::tracker session::txn_send(proton::sender s, proton::message msg) {
+void session::transaction_delete() { auto &_txn_impl = session_context::get(pn_object())._txn_impl; delete _txn_impl; _txn_impl = nullptr;}
+void session::transaction_commit() { session_context::get(pn_object())._txn_impl->commit(); }
+void session::transaction_abort() { session_context::get(pn_object())._txn_impl->abort(); }
+void session::transaction_declare() { session_context::get(pn_object())._txn_impl->declare(); }
+bool session::transaction_is_empty() { return session_context::get(pn_object())._txn_impl == NULL; }
+bool session::transaction_is_declared() { return (!transaction_is_empty()) && session_context::get(pn_object())._txn_impl->state == transaction_impl::State::DECLARED; }
+void session::transaction_accept(delivery &t) { return session_context::get(pn_object())._txn_impl->accept(t); }
+proton::tracker session::transaction_send(proton::sender s, proton::message msg) {
     return session_context::get(pn_object())._txn_impl->send(s, msg);
 }
-void session::txn_handle_outcome(proton::tracker t) {
+void session::transaction_handle_outcome(proton::tracker t) {
     session_context::get(pn_object())._txn_impl->handle_outcome(t);
 }
 
@@ -339,12 +339,12 @@ void transaction_impl::handle_outcome(proton::tracker t) {
             return;
         } else if (pn_disposition_is_failed(disposition)) {
             state = State::FREE;
-            t.session().txn_delete();
+            t.session().transaction_delete();
             handler->on_transaction_declare_failed(t.session());
             return;
         } else {
             state = State::FREE;
-            t.session().txn_delete();
+            t.session().transaction_delete();
             handler->on_transaction_declare_failed(t.session());
             return;
         }
@@ -353,13 +353,13 @@ void transaction_impl::handle_outcome(proton::tracker t) {
         if (pn_disposition_is_failed(disposition)) {
             if (!failed) {
                 state = State::FREE;
-                t.session().txn_delete();
+                t.session().transaction_delete();
                 handler->on_transaction_commit_failed(t.session());
                 release_pending();
                 return;
             } else {
                 state = State::FREE;
-                t.session().txn_delete();
+                t.session().transaction_delete();
                 // Transaction abort failed.
                 return;
             }
@@ -367,14 +367,14 @@ void transaction_impl::handle_outcome(proton::tracker t) {
             if (failed) {
                 // Transaction abort is successful
                 state = State::FREE;
-                t.session().txn_delete();
+                t.session().transaction_delete();
                 handler->on_transaction_aborted(t.session());
                 release_pending();
                 return;
             } else {
                 // Transaction commit is successful
                 state = State::FREE;
-                t.session().txn_delete();
+                t.session().transaction_delete();
                 handler->on_transaction_committed(t.session());
                 return;
             }
